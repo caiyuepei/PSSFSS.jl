@@ -39,7 +39,7 @@ mutable struct RWGSheet <: Sheet
   K::Vector{ComplexF64}
   K_ξ::Vector{ComplexF64}
   K_η::Vector{ComplexF64}
-  ρ_r::Vector{Float64}
+  ρ_r::Vector{SV2}
   rinv::Vector{Float64}
   # Parameters that the face/face integrals depend on:
   ψ₁::Float64  # Incremental phase shift (radians)
