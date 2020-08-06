@@ -204,9 +204,8 @@ function electric_modal_sum_funcs(k0, u, ψ₁, ψ₂, layers::Vector{Layer},
     table2 = OffsetArray(zeros(ComplexF64, 2m+1, 2m+1), -m:m, -m:m)
 
     converged = false
-    convrepeat = 20 # number of consecutive rings for which convergence must occur
-    convlist = [false for i in 1:convrepeat]
-    pindex = [2:convrepeat...,1]
+    convrepeat = 40 # number of consecutive rings for which convergence must occur
+    convlist = OffsetArray([false for i in 0:mmax_list[end]÷2], 0:mmax_list[end]÷2)
     mmax = mmax_list[1] ÷ 2
     mmax_old = -2
     test1 = test2 = 0.0 # Establish scope
@@ -218,9 +217,9 @@ function electric_modal_sum_funcs(k0, u, ψ₁, ψ₂, layers::Vector{Layer},
         mmaxo2 = mmax÷2
         mmax_oldo2 = mmax_old÷2
         # Fill the tables:
-        for r in (mmax_oldo2+1):mmaxo2
+        Threads.@threads for r in (mmax_oldo2+1):mmaxo2
             ringsum1 = zero(eltype(table1))
-            ringsum2 = zero(eltype(table1))
+            ringsum2 = zero(eltype(table2))
             for (m,n) in ring(r)
                 βmn = β₀₀ + m*β₁ + n*β₂   # Modal transverse wave vector
                 β² = βmn ⋅ βmn # magnitude squared
@@ -270,12 +269,11 @@ function electric_modal_sum_funcs(k0, u, ψ₁, ψ₂, layers::Vector{Layer},
             # Check for convergence of this ring
             test1 = abs(ringsum1/table1[0,0])
             test2 = abs(ringsum2/table2[0,0])
-            permute!(convlist, pindex)
-            convlist[end] = test1 < convtest && test2 < convtest
+            convlist[r] = test1 < convtest && test2 < convtest
         end
         
         #  Check for convergence
-        if all(convlist)
+        if mmaxo2 ≥ convrepeat && all(@view convlist[(mmaxo2 - convrepeat + 1):mmaxo2])
             converged = true
             break
         else
@@ -458,9 +456,8 @@ function magnetic_modal_sum_funcs(k0, u, ψ₁, ψ₂, layers::Vector{Layer},
     table2 = OffsetArray(zeros(ComplexF64, 2m+1, 2m+1), -m:m, -m:m)
 
     converged = false
-    convrepeat = 20 # number of consecutive rings for which convergence must occur
-    convlist = [false for i in 1:convrepeat]
-    pindex = [2:convrepeat...,1]
+    convrepeat = 40 # number of consecutive rings for which convergence must occur
+    convlist = OffsetArray([false for i in 0:mmax_list[end]÷2], 0:mmax_list[end]÷2)
     mmax = mmax_list[1] ÷ 2
     mmax_old = -2
     test1 = test2 = 0.0
@@ -472,7 +469,7 @@ function magnetic_modal_sum_funcs(k0, u, ψ₁, ψ₂, layers::Vector{Layer},
         mmaxo2 = mmax÷2
         mmax_oldo2 = mmax_old÷2
         # Fill the tables:
-        for r in (mmax_oldo2+1):mmaxo2
+        Threads.@threads for r in (mmax_oldo2+1):mmaxo2
             ringsum1 = zero(eltype(table1))
             ringsum2 = zero(eltype(table1))
             for (m,n) in ring(r)
@@ -519,12 +516,11 @@ function magnetic_modal_sum_funcs(k0, u, ψ₁, ψ₂, layers::Vector{Layer},
             # Check for convergence of this ring
             test1 = abs(ringsum1/table1[0,0])
             test2 = abs(ringsum2/table2[0,0])
-            permute!(convlist, pindex)
-            convlist[end] = test1 < convtest && test2 < convtest
+            convlist[r] = test1 < convtest && test2 < convtest
         end
 
         #  Check for convergence
-        if all(convlist)
+        if mmaxo2 ≥ convrepeat && all(@view convlist[(mmaxo2 - convrepeat + 1):mmaxo2])
             converged = true
             break
         else
