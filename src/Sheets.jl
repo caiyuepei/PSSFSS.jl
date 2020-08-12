@@ -78,7 +78,7 @@ RWGSheet() = RWGSheet("", u"mm",            # style, units
                       ComplexF64[],         # K
                       ComplexF64[],         # K_ξ
                       ComplexF64[],         # K_η
-                      Float64[],            # ρ
+                      Array{SV2}(undef,0),  # ρ_r
                       Float64[],            # rinv
                       0.0, 0.0, 0.0,        # ψ₁, ψ₂, u
                       ' ', "",              # class, info

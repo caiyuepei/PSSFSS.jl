@@ -1,14 +1,17 @@
 module PSSFSS
 
 include("PSSFSSLen.jl")
+include("Rings.jl")
 include("Substrate.jl")
 include("Sheets.jl")
 include("Meshsub.jl")
 include("Elements.jl")
 include("RWG.jl")
 include("PGF.jl")
+include("Zint.jl")
 
 using Reexport
+using .Rings
 @reexport using .PSSFSSLen
 @reexport using .Substrate
 @reexport using .Sheets: RWGSheet

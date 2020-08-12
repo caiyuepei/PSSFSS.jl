@@ -4,17 +4,19 @@ export electric_modal_sum_funcs, magnetic_modal_sum_funcs, jksums
 
 using LinearAlgebra: norm, ⋅, ×
 using OffsetArrays
+using ..Rings: Ring
 using ..Sheets: MV2
 using ..Substrate: Layer
 using FFTW: fft!
 
 # Variables used by the spatial routines:
-const jkringmax = 53 # Max. number of rings to sum over
+const jkringmax = 65 # Max. number of rings to sum over
   
 # Variables used by the spectral routines:
 const mmax_list = (32, 2048)
 
 
+#=
 """
     ring(r::Integer)
 
@@ -26,11 +28,13 @@ function ring(r::Integer)
     topbot = vec([(m,n) for m in 1-r:r-1, n in (-r,r)])
     return vcat(leftright,topbot)
 end
+=#
+
 
 
 
 """
-    jksums(uρ₀₀, ψ₁, ψ₂, us₁, us₂, extract::Bool; convtest=1e-7) --> (jsum, ksum)
+    jksums(uρ₀₀, ψ₁, ψ₂, us₁, us₂, extract::Bool; convtest=1e-8) --> (jsum, ksum)
                                                                   
 Compute the frequency-independent sums defined in Equations (7.32c) and (7.32d) of the 
 theory documentation.
@@ -55,21 +59,21 @@ theory documentation.
 - `ksum`: The complex sum appearing in the integral of Equation (7.22d) and (7.32d) of 
               the theory documentation.
 """
-function jksums(uρ₀₀, ψ₁, ψ₂, us₁, us₂, extract, convtest=1.e-7)
+function jksums(uρ₀₀, ψ₁, ψ₂, us₁, us₂, extract, convtest=1e-8)
     rmin = 5 # min number rings to sum over
     small = 1e-5  # Test value for small-argument approximation
 
     arg = norm(uρ₀₀)
-    term = exp(-arg)
-    ksum = complex(term)
+    rterm = exp(-arg)
+    ksum = complex(rterm)
     if extract 
         if arg ≤ small
             jsum = complex((-arg/6 + 0.5)*arg - 1) # Small argument extraction formula
         else
-            jsum = complex((term - 1) / arg)  # Large argument extraction formula
+            jsum = complex((rterm - 1) / arg)  # Large argument extraction formula
         end
     else
-      jsum = complex(term / arg)  # No extraction formula
+      jsum = complex(rterm / arg)  # No extraction formula
     end
     
     # Begin loop over summation lattice rings.
@@ -77,7 +81,7 @@ function jksums(uρ₀₀, ψ₁, ψ₂, us₁, us₂, extract, convtest=1.e-7)
     for r in 1:jkringmax  
         rsave = r
         jring = kring = zero(ComplexF64) # Initialize ring sums
-        for (m,n) in ring(r)
+        for (m,n) in Ring(r)
             arg = norm(uρ₀₀ - (m*us₁ + n*us₂))
             term = exp(-complex(arg, m*ψ₁ + n*ψ₂))
             jring += term / arg
@@ -210,9 +214,9 @@ function electric_modal_sum_funcs(k0, u, ψ₁, ψ₂, layers::Vector{Layer},
     mmax_old = -2
     test1 = test2 = 0.0 # Establish scope
     while mmax < mmax_list[end] # Convergence loop
-        mmax = nextprod([2,3], 1 + mmax)
+        mmax = nextprod([2,3,5], 1 + mmax)
         while 0 ≠ rem(mmax,2)
-            mmax = nextprod([2,3], 1 + mmax)
+            mmax = nextprod([2,3,5], 1 + mmax)
         end
         mmaxo2 = mmax÷2
         mmax_oldo2 = mmax_old÷2
@@ -220,7 +224,7 @@ function electric_modal_sum_funcs(k0, u, ψ₁, ψ₂, layers::Vector{Layer},
         Threads.@threads for r in (mmax_oldo2+1):mmaxo2
             ringsum1 = zero(eltype(table1))
             ringsum2 = zero(eltype(table2))
-            for (m,n) in ring(r)
+            for (m,n) in Ring(r)
                 βmn = β₀₀ + m*β₁ + n*β₂   # Modal transverse wave vector
                 β² = βmn ⋅ βmn # magnitude squared
                 β² = max(β², β²min)  # Avoid singularity
@@ -462,9 +466,9 @@ function magnetic_modal_sum_funcs(k0, u, ψ₁, ψ₂, layers::Vector{Layer},
     mmax_old = -2
     test1 = test2 = 0.0
     while mmax < mmax_list[end] # Convergence loop
-        mmax = nextprod([2,3], 1 + mmax)
+        mmax = nextprod([2,3,5], 1 + mmax)
         while 0 ≠ rem(mmax,2)
-            mmax = nextprod([2,3], 1 + mmax)
+            mmax = nextprod([2,3,5], 1 + mmax)
         end
         mmaxo2 = mmax÷2
         mmax_oldo2 = mmax_old÷2
@@ -472,7 +476,7 @@ function magnetic_modal_sum_funcs(k0, u, ψ₁, ψ₂, layers::Vector{Layer},
         Threads.@threads for r in (mmax_oldo2+1):mmaxo2
             ringsum1 = zero(eltype(table1))
             ringsum2 = zero(eltype(table1))
-            for (m,n) in ring(r)
+            for (m,n) in Ring(r)
                 βmn = β₀₀ + m*β₁ + n*β₂   # Modal transverse wave vector
                 β² = βmn ⋅ βmn # magnitude squared
                 β² = max(β², β²min)  # Avoid singularity
@@ -684,11 +688,10 @@ function direct_electric_modal_series(k0, u, ψ₁, ψ₂,
     Σm2[0] = Σ2 * cis(-(β₀₀ ⋅ ρdif))
     
     # Begin loop over summation lattice rings.
-    #Threads.@threads for r in 1:max_rings
     for r in 1:max_rings
         sumring1 = zero(ComplexF64)
         sumring2 = zero(ComplexF64)
-        for (m,n) in ring(r)
+        for (m,n) in Ring(r)
             cfact = cis(-((β₀₀ + m*β₁ + n*β₂) ⋅ ρdif))
             Σ1, Σ2 = summands(m,n)
             sumring1 += Σ1 * cfact
@@ -821,7 +824,7 @@ function direct_magnetic_modal_series(k0, u, ψ₁, ψ₂,
     for r in 1:max_rings
         sumring1 = zero(ComplexF64)
         sumring2 = zero(ComplexF64)
-        for (m,n) in ring(r)
+        for (m,n) in Ring(r)
             cfact = cis(-((β₀₀ + m*β₁ + n*β₂) ⋅ ρdif))
             Σ1, Σ2 = summands(m,n)
             sumring1 += Σ1 * cfact
