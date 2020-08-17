@@ -1,5 +1,10 @@
 module PSSFSS
 
+if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optlevel"))
+    @eval Base.Experimental.@optlevel 3
+end
+
+
 include("PSSFSSLen.jl")
 include("Rings.jl")
 include("Substrate.jl")
