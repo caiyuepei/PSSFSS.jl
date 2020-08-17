@@ -53,12 +53,14 @@ the generalized impedance matrix.
 
 """
 function filljk!(metal::RWGSheet, rwgdat::RWGData, closed::Bool)
-    ξ = SVector(0.3333333333, 0.05971587, 0.47014206, 0.47014206, 
-                 0.79742699,   0.10128651, 0.10128651)
-    η = SVector(0.3333333333, 0.47014206, 0.05971587, 0.47014206,
-                0.10128651, 0.79742699, 0.10128651)
-    wght = SVector(0.1125, 0.066197075, 0.066197075, 0.066197075,
-                   0.062969590,  0.062969590, 0.062969590)
+    ξ = SVector(0.33333333333333330, 0.10128650732345633, 0.79742698535308730,
+                0.10128650732345633, 0.47014206410511505, 0.05971587178976989,
+                0.47014206410511505)
+    η = SVector(0.33333333333333333, 0.79742698535308730, 0.10128650732345633,
+                0.10128650732345633, 0.05971587178976989, 0.47014206410511505,
+                0.47014206410511505)
+    wght = SVector(0.1125, 0.06296959027241358, 0.06296959027241358, 0.06296959027241358,
+                   0.06619707639425308, 0.06619707639425308, 0.06619707639425308)
 
     next = (2, 3, 1) 
 
@@ -71,7 +73,7 @@ function filljk!(metal::RWGSheet, rwgdat::RWGData, closed::Bool)
     K = zeros(ComplexF64, nufp)
     K_ξ = zeros(ComplexF64, nufp)
     K_η = zeros(ComplexF64, nufp)
-    ρ_r = [MV2(0.,0.) for i=1:nufp]
+    ρ_r = zeros(typeof(MV2(0.,0.)), nufp)
     rinv = zeros(Float64, nufp) 
 
     i2s = CartesianIndices((nface,nface))
@@ -105,7 +107,6 @@ function filljk!(metal::RWGSheet, rwgdat::RWGData, closed::Bool)
         self_tri = ifm == ifs
         clsflg = self_tri || closed  # Extract if self or if always
         im = @view metal.fe[:,ifm]   # Obtain the three edges of the observation triangle
-        #vtxcrd!(rm, ifm, metal) # observation triangle vertex coordinates
         rm = vtxcrd(ifm, metal) # observation triangle vertex coordinates
         rmc = mean(rm) # observation face centroid (meters)
         
@@ -161,7 +162,7 @@ function filljk!(metal::RWGSheet, rwgdat::RWGData, closed::Bool)
             # rinv is now the quantity defined in (B.3a)
             # ρ_r is now the quantity defined in (B.3b)
             ρ_r[iufp] /= area2  # Make it unitless
-            rinv[iufp] /= area2 * ulocal # Make it unitless
+            rinv[iufp] /= (area2 * ulocal) # Make it unitless
         end
       
     end
@@ -177,7 +178,8 @@ function filljk!(metal::RWGSheet, rwgdat::RWGData, closed::Bool)
 
     return nothing
 end  
-    
+
+#=
 """
  Return the coordinates (in local units) of the triangle vertices for face iface.
 """
@@ -185,13 +187,15 @@ end
     vi = @view metal.fv[:,iface] # Vertex indices
     ρvec[:] = metal.ρ[vi]
 end
+=#
+
 
 """
  Return the coordinates (in local units) of the triangle vertices for face iface.
 """
 @inline function vtxcrd(iface, metal)
     vi = @view metal.fv[:,iface] # Vertex indices
-    metal.ρ[vi]
+    @view metal.ρ[vi]
 end
 
 
@@ -213,12 +217,14 @@ Compute frequency-dependent integrals needed to fill the generalized impedance m
                               by Eqs (7.22a), (7.27), and (7.32a).  Their units are (1/m).
 """
 function zint(Σm1_func::Function, Σm2_func::Function, rs, rmc)
-    ξ = SVector(0.3333333333, 0.05971587, 0.47014206, 0.47014206, 
-                 0.79742699,   0.10128651, 0.10128651)
-    η = SVector(0.3333333333, 0.47014206, 0.05971587, 0.47014206,
-                0.10128651, 0.79742699, 0.10128651)
-    wght = SVector(0.1125, 0.066197075, 0.066197075, 0.066197075,
-                   0.062969590,  0.062969590, 0.062969590)
+    ξ = SVector(0.33333333333333330, 0.10128650732345633, 0.79742698535308730,
+                0.10128650732345633, 0.47014206410511505, 0.05971587178976989,
+                0.47014206410511505)
+    η = SVector(0.33333333333333333, 0.79742698535308730, 0.10128650732345633,
+                0.10128650732345633, 0.05971587178976989, 0.47014206410511505,
+                0.47014206410511505)
+    wght = SVector(0.1125, 0.06296959027241358, 0.06296959027241358, 0.06296959027241358,
+                   0.06619707639425308, 0.06619707639425308, 0.06619707639425308)
 
     I1_ξ = zero(ComplexF64)
     I1_η = zero(ComplexF64)
