@@ -674,7 +674,7 @@ each observation point / source triangle pair.  These integrals,
 when weighted according to Equation~\eqref{eq:Lit} contribute
 to as many as nine entries of $\mat{Z}$, depending on the number of basis 
 functions defined in each triangle.  They are computed using the seven-point
-cubature formula from \cite{zien:71},
+cubature formula found in, e.g., \cite{zien:71} or \cite{bali:84}.
 \begin{equation}
     \int_0^1 \int_0^{1-\eta} \!\!\!
   f(\xi, \eta) \; \d\xi \; \d\eta \approx \sum_{k=1}^7 w_k f(\xi_k, \eta_k).
@@ -688,13 +688,13 @@ The sample points and weights are given in Table~\ref{tab:tri}.
       {\boldmath $\xi_k$} \unboldmath  & 
       {\boldmath $\eta_k$ \unboldmath} & {\boldmath $w_k$ \unboldmath} 
       \\ \hline
-      1 & 0.33333333    & 0.33333333    & 0.112500000 \\
-      2 & 0.05971587    & 0.47014206    & 0.066197075 \\
-      3 & 0.47014206    & 0.05971587    & 0.066197075 \\
-      4 & 0.47014206    & 0.47014206    & 0.066197075 \\
-      5 & 0.79742699    & 0.10128651    & 0.062969590 \\
-      6 & 0.10128651    & 0.79742699    & 0.062969590 \\
-      7 & 0.10128651    & 0.10128651    & 0.062969590 \\
+      1 & 0.33333333333333333 & 0.33333333333333333 & 0.11250000000000000 \\
+      2 & 0.10128650732345633 & 0.79742698535308730 & 0.06296959027241358 \\
+      3 & 0.79742698535308730 & 0.10128650732345633 & 0.06296959027241358 \\
+      4 & 0.10128650732345633 & 0.10128650732345633 & 0.06296959027241358 \\
+      5 & 0.47014206410511505 & 0.05971587178976989 & 0.06619707639425308 \\
+      6 & 0.05971587178976989 & 0.47014206410511505 & 0.06619707639425308 \\
+      7 & 0.47014206410511505 & 0.47014206410511505 & 0.06619707639425308 \\
       \hline 
     \end{tabular}
   \end{center}
