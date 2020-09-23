@@ -9,8 +9,9 @@ module Substrate
 using ..PSSFSSLen  # For length units and ustrip only
 using StaticArrays: MVector
 
-export Layer, Gblock
+export Layer, Gblock, TEorTM
 
+@enum TEorTM TE=1 TM=2
 
 """
     Layer <: Any
@@ -51,14 +52,14 @@ mutable struct Layer
     width::Float64  # (thickness in meters without attached units)
     #  Mode indices, sorted in order of increasing real part, or decreasing 
     #  imaginary part, of γ, the mode attenuation constant.  M is the x 
-    #  index, N is the y index, and P=1 for TE, P=2 for TM:
-    P::Vector{Int}
+    #  index, N is the y index, and P = TE or TM:
+    P::Vector{TEorTM}
     M::Vector{Int}
     N::Vector{Int}
     β₁::MVector{2,Float64}  # Reciprocal lattice vector (1/m)
     β₂::MVector{2,Float64}  # Reciprocal lattice vector (1/m)
     # Transverse portion of modal propagation vectors (radians/meter):
-    beta::Vector{MVector{2,Float64}}
+    β::Vector{MVector{2,Float64}}
     γ::Vector{ComplexF64} # Modal attenuation constants (nepers/meter)
     Y::Vector{ComplexF64} # Modal admittances (Siemens)
     c::Vector{ComplexF64} # Modal normalization constants (volts/meter)
@@ -70,7 +71,7 @@ mutable struct Layer
                     cϵᵣ = ϵᵣ * complex(1.0, -tanδ)
                     cμᵣ = μᵣ * complex(1.0, -mtanδ) 
                     new(cϵᵣ, cμᵣ, width, float(ustrip(u"m", width)),
-                        Int[], Int[], Int[], MVector{2}([0.,0.]), MVector{2}([0.,0.]), 
+                        TEorTM[], Int[], Int[], MVector{2}([0.,0.]), MVector{2}([0.,0.]), 
                         MVector{2,Float64}[], ComplexF64[], ComplexF64[], ComplexF64[], 
                         MVector{2,Float64}[])
     end # function
